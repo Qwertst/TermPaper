@@ -41,7 +41,7 @@ private:
 
 class Pair{
 public:
-    Pair(WSEML key, WSEML data, WSEML keyRole, WSEML dataRole, List *listPtr):
+    Pair(WSEML key, WSEML data, WSEML keyRole, WSEML dataRole, List* listPtr):
             key(key), data(data), keyRole(keyRole), dataRole(dataRole), listPtr(listPtr){
         key.getObj()->setPair(this);
         data.getObj()->setPair(this);
@@ -56,5 +56,5 @@ private:
     List* listPtr;
 };
 
-const WSEML NULLOBJECT = WSEML(nullptr);
+const WSEML NULLOBJ = WSEML(nullptr);
 #endif
