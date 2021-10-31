@@ -8,18 +8,25 @@ class Object;
 
 class WSEML{
 public:
-    explicit WSEML(Object* obj): obj(obj){}
-    Object* getObj(){ return obj; }
+    explicit WSEML(Object* obj);
+    WSEML();
+    WSEML(const WSEML& wseml);
+    WSEML(WSEML&& wseml) noexcept;
+    ~WSEML();
+    WSEML& operator=(const WSEML& wseml);
+    WSEML& operator=(WSEML&& wseml) noexcept;
+    Object* getObj();
 private:
     Object* obj;
 };
 
 class Object{
 public:
-    void setPair(Pair* p){ pair = p; }
-    Pair* getPair(){ return pair; }
-protected:
-    Object(WSEML type, Pair* pair): type(type), pair(pair){};
+    Object(WSEML& type, Pair* pair);
+    virtual Object* clone() const = 0;
+    virtual ~Object();
+    void setPair(Pair* p);
+    Pair* getPair();
 private:
     WSEML type;
     Pair* pair;
@@ -27,27 +34,25 @@ private:
 
 class ByteString: public Object{
 public:
-    ByteString(std::string str, WSEML type, Pair* p = nullptr): Object(type, p), bytes(std::move(str)){};
+    ByteString(std::string str, WSEML& type, Pair* p = nullptr);
+    ~ByteString() override;
+    ByteString* clone() const override;
 private:
     std::string bytes;
 };
 
 class List: public Object{
 public:
-    List(std::list<Pair> l, WSEML type, Pair* p = nullptr): Object(type, p), pairList(std::move(l)){};
+    List(std::list<Pair> l, WSEML& type, Pair* p = nullptr);
+    ~List() override;
+    List* clone() const override;
 private:
     std::list<Pair> pairList;
 };
 
 class Pair{
 public:
-    Pair(WSEML key, WSEML data, WSEML keyRole, WSEML dataRole, List* listPtr):
-            key(key), data(data), keyRole(keyRole), dataRole(dataRole), listPtr(listPtr){
-        key.getObj()->setPair(this);
-        data.getObj()->setPair(this);
-        keyRole.getObj()->setPair(this);
-        dataRole.getObj()->setPair(this);
-    }
+    Pair(WSEML& key, WSEML& data, WSEML& keyRole, WSEML& dataRole, List* listPtr);
 private:
     WSEML key;
     WSEML data;
@@ -55,6 +60,4 @@ private:
     WSEML dataRole;
     List* listPtr;
 };
-
-const WSEML NULLOBJ = WSEML(nullptr);
 #endif
