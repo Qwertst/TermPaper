@@ -8,8 +8,10 @@ class Object;
 
 class WSEML{
 public:
-    explicit WSEML(Object* obj);
     WSEML();
+    explicit WSEML(Object* obj);
+    WSEML(std::string str, WSEML& type, Pair* p = nullptr);
+    WSEML(std::list<Pair> l, WSEML& type, Pair* p = nullptr);
     WSEML(const WSEML& wseml);
     WSEML(WSEML&& wseml) noexcept;
     ~WSEML();

@@ -4,6 +4,14 @@ WSEML::WSEML(Object* obj): obj(obj){}
 
 WSEML::WSEML(): obj(nullptr){}
 
+WSEML::WSEML(std::string str, WSEML &type, Pair *p) {
+    obj = new ByteString(std::move(str), type, p);
+}
+
+WSEML::WSEML(std::list<Pair> l, WSEML &type, Pair *p) {
+    obj = new List(std::move(l), type, p);
+}
+
 WSEML::WSEML(const WSEML& wseml){
     if (wseml.obj != nullptr)
         obj = wseml.obj->clone();
