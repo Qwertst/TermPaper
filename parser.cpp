@@ -5,30 +5,30 @@
 inline WSEML parse(const std::string& text);
 inline WSEML parseHelper(const std::string& text, size_t& curPos);
 
-inline WSEML parseString(const std::string& text, size_t& curPos) {
-    size_t pos = text.find('\'', curPos);
-    std::string str = text.substr(curPos, pos-curPos+1);
-    std::cout << str << "\n";
-    curPos = pos+1;
-    return WSEML(str);
-}
+//inline WSEML parseString(const std::string& text, size_t& curPos) {
+//    size_t pos = text.find('\'', curPos);
+//    std::string str = text.substr(curPos, pos-curPos+1);
+//    std::cout << str << "\n";
+//    curPos = pos+1;
+//    return WSEML(str);
+//}
 
-inline WSEML parseNumber(const std::string& text, size_t& curPos) {
-    size_t lastPos = curPos;
-    while ((48 <= text[curPos] && text[curPos] <= 57) || text[curPos] == 'e' || text[curPos] == '.'
-           || text[curPos] == 'e' || text[curPos] == '(' || text[curPos] == ')' || text[curPos] == '/')
-        curPos++;
-    std::string str = text.substr(lastPos, curPos - lastPos);
-    return WSEML(str);
-}
+//inline WSEML parseNumber(const std::string& text, size_t& curPos) {
+//    size_t lastPos = curPos;
+//    while ((48 <= text[curPos] && text[curPos] <= 57) || text[curPos] == 'e' || text[curPos] == '.'
+//           || text[curPos] == 'e' || text[curPos] == '(' || text[curPos] == ')' || text[curPos] == '/')
+//        curPos++;
+//    std::string str = text.substr(lastPos, curPos - lastPos);
+//    return WSEML(str);
+//}
 
-inline WSEML parseId(const std::string& text, size_t& curPos) {
-    size_t lastPos = curPos;
-    while ((65 <= text[curPos] && text[curPos] <= 90) || (97 <= text[curPos] && text[curPos] <= 122))
-        curPos++;
-    std::string str = text.substr(lastPos, curPos-lastPos);
-    return WSEML(str);
-}
+//inline WSEML parseId(const std::string& text, size_t& curPos) {
+//    size_t lastPos = curPos;
+//    while ((65 <= text[curPos] && text[curPos] <= 90) || (97 <= text[curPos] && text[curPos] <= 122))
+//        curPos++;
+//    std::string str = text.substr(lastPos, curPos-lastPos);
+//    return WSEML(str);
+//}
 
 inline WSEML parseList(const std::string& text, size_t& curPos){
     std::list<Pair> list;
@@ -46,7 +46,7 @@ inline WSEML parseList(const std::string& text, size_t& curPos){
             bool isList = false;
             if (text[curPos] != '\'') {
                 size_t balance = 1;
-                for (size_t pos = curPos; (text[pos] != ']' && balance != 0); ++pos) {
+                for (size_t pos = curPos; (text[pos] != ']' || balance != 0); ++pos) {
                     if (text[pos+1] == '[') balance++;
                     if (text[pos+1] == ']') balance--;
                     if (text[pos] == ':') isList = true;
@@ -92,37 +92,48 @@ inline WSEML parseList(const std::string& text, size_t& curPos){
 inline WSEML parseHelper(const std::string& text, size_t& curPos){
     while (curPos < text.length()){
         switch(text[curPos]){
-            // Null Object parsing
+            /// Null Object parsing
             case '$': {
                 curPos++;
                 return WSEML();
             }
-            // String parsing
+            /// String parsing
             case '`': {
-                return WSEML(parseString(text, curPos));
+                size_t pos = text.find('\'', curPos);
+                std::string str = text.substr(curPos, pos-curPos+1);
+                std::cout << str << "\n";
+                curPos = pos+1;
+                return WSEML(str);
             }
-            // Bytes parsing
+            /// Bytes parsing
 //            case '\"':{
 //                return WSEML(parseBytes(text, curPos));
 //            }
-            // List parsing
+            /// List parsing
             case '{':{
                 curPos++;
                 return parseList(text, curPos);
             }
-            // Substring parsing
+            case '<':{
+                curPos++;
+                size_t pos = text.find('\'', curPos);
+                std::string newString = text.substr(curPos, pos-curPos);
+                curPos = pos+1;
+                return parse(newString);
+            }
+            /// Substring parsing
             case '#':{
                 curPos++;
                 if (text[curPos] == '<'){
-                    curPos+2;
+                    curPos+=2;
                     size_t pos = text.find('\'', curPos);
                     std::string fileName = text.substr(curPos, pos-curPos);
                     curPos = pos+1;
-                    std::cout << fileName << "\n" << text[curPos];
                     std::ifstream file;
                     file.open(fileName);
                     std::string textFromFile;
                     std::getline(file, textFromFile);
+                    std::cout << textFromFile;
                     return parse(textFromFile);
                 }
                 else{
@@ -134,13 +145,22 @@ inline WSEML parseHelper(const std::string& text, size_t& curPos){
                 }
             }
             default: {
-                // Numbers parsing
+                /// Numbers parsing
                 if (48 <= text[curPos] && text[curPos] <= 57) {
-                    return WSEML(parseNumber(text, curPos));
+                    size_t lastPos = curPos;
+                    while ((48 <= text[curPos] && text[curPos] <= 57) || text[curPos] == 'e' || text[curPos] == '.'
+                           || text[curPos] == 'e' || text[curPos] == '(' || text[curPos] == ')' || text[curPos] == '/')
+                        curPos++;
+                    std::string str = text.substr(lastPos, curPos - lastPos);
+                    return WSEML(str);
                 }
-                // Identifiers parsing
+                /// Identifiers parsing
                 if ((65 <= text[curPos] && text[curPos] <= 90) || (97 <= text[curPos] && text[curPos] <= 122)){
-                    return WSEML(parseId(text, curPos));
+                    size_t lastPos = curPos;
+                    while ((65 <= text[curPos] && text[curPos] <= 90) || (97 <= text[curPos] && text[curPos] <= 122))
+                        curPos++;
+                    std::string str = text.substr(lastPos, curPos-lastPos);
+                    return WSEML(str);
                 }
             }
         }
@@ -153,6 +173,28 @@ inline WSEML parse(const std::string& text){
     return parseHelper(text, curPos);
 }
 
-inline std::string pack(WSEML& wseml){
-    return "In progress...";
+inline std::string pack(WSEML wseml){ // много конструкторов :(
+    std::string wsemlString;
+    if (wseml.getObj() == nullptr) return "$";
+    if (wseml.getObj()->typeInfo() == 0){
+        wsemlString = dynamic_cast<ByteString*>(wseml.getObj())->get();
+        return wsemlString;
+    }
+    else{
+        std::list<Pair> list = dynamic_cast<List*>(wseml.getObj())->get();
+        size_t i = 0;
+        wsemlString+="{";
+        for (auto it = list.begin(); it != list.end(); ++it){
+            i++;
+            std::string keyStr = pack(it->getKeyRole()) + "[" + pack(it->getKey()) + "]" + pack(it->getKey().getObj()->getType());
+            std::string dataStr = pack(it->getDataRole()) + "[" + pack(it->getData()) + "]" + pack(it->getData().getObj()->getType());
+            wsemlString+=keyStr;
+            wsemlString+=":";
+            wsemlString+=dataStr;
+            if (i != list.size())
+                wsemlString+=", ";
+        }
+        wsemlString+="}";
+    }
+    return wsemlString;
 }

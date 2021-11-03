@@ -32,7 +32,9 @@ public:
     virtual ~Object();
     void setPair(Pair* p);
     void setType(WSEML& newType);
+    virtual int typeInfo() const = 0; // Base Костыль
     Pair* getPair();
+    WSEML getType();
 private:
     WSEML type;
     Pair* pair;
@@ -43,6 +45,8 @@ public:
     ByteString(std::string str, WSEML& type = NULLOBJ, Pair* p = nullptr);
     ~ByteString() override;
     ByteString* clone() const override;
+    int typeInfo() const override; // Костыль #1
+    std::string& get();
 private:
     std::string bytes;
 };
@@ -52,6 +56,7 @@ public:
     List(std::list<Pair> l, WSEML& type= NULLOBJ, Pair* p = nullptr);
     ~List() override;
     List* clone() const override;
+    int typeInfo() const override; // Костыль #2
     std::list<Pair>& get();
 private:
     std::list<Pair> pairList;
@@ -60,6 +65,10 @@ private:
 class Pair{
 public:
     Pair(List* listPtr, WSEML& key, WSEML& data, WSEML& keyRole = NULLOBJ, WSEML& dataRole = NULLOBJ);
+    WSEML getKey();
+    WSEML getData();
+    WSEML getKeyRole();
+    WSEML getDataRole();
 private:
     WSEML key;
     WSEML data;

@@ -66,6 +66,10 @@ Pair* Object::getPair() {
     return pair;
 }
 
+WSEML Object::getType() {
+    return type;
+}
+
 void Object::setType(WSEML& newType) {
     type = newType;
 }
@@ -76,6 +80,14 @@ ByteString::~ByteString() = default;
 
 ByteString* ByteString::clone() const {
     return new ByteString(*this);
+}
+
+std::string &ByteString::get() {
+    return bytes;
+}
+
+int ByteString::typeInfo() const {
+    return 0;
 }
 
 List::List(std::list<Pair> l, WSEML& type, Pair* p): Object(type, p), pairList(std::move(l)) {}
@@ -90,6 +102,10 @@ std::list<Pair> &List::get() {
     return pairList;
 }
 
+int List::typeInfo() const {
+    return 1;
+}
+
 Pair::Pair(List* listPtr, WSEML& key, WSEML& data, WSEML& keyRole, WSEML& dataRole):
         key(key), data(data), keyRole(keyRole), dataRole(dataRole), listPtr(listPtr){
     if (key.getObj())
@@ -100,4 +116,20 @@ Pair::Pair(List* listPtr, WSEML& key, WSEML& data, WSEML& keyRole, WSEML& dataRo
         keyRole.getObj()->setPair(this);
     if (dataRole.getObj())
         dataRole.getObj()->setPair(this);
+}
+
+WSEML Pair::getKey() {
+    return key;
+}
+
+WSEML Pair::getData() {
+    return data;
+}
+
+WSEML Pair::getKeyRole(){
+    return keyRole;
+}
+
+WSEML Pair::getDataRole() {
+    return dataRole;
 }
