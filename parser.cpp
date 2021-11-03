@@ -44,12 +44,13 @@ inline WSEML parseList(const std::string& text, size_t& curPos){
         if (text[curPos] == '['){
             curPos++;
             bool isList = false;
-            if (text[curPos] != '\'') {
+            if (text[curPos] != '`') {
+                if (text[curPos] == '{') curPos++;
                 size_t balance = 1;
                 for (size_t pos = curPos; (text[pos] != ']' || balance != 0); ++pos) {
                     if (text[pos+1] == '[') balance++;
                     if (text[pos+1] == ']') balance--;
-                    if (text[pos] == ':') isList = true;
+                    if (text[pos] == ':'){ isList = true; break; }
                 }
             }
             if (isList)
@@ -58,6 +59,7 @@ inline WSEML parseList(const std::string& text, size_t& curPos){
                 keyRole = parseHelper(text, curPos);
             std::swap(keyRole, key);
             curPos++;
+            if (text[curPos] == ']') curPos++;
             WSEML keyType = parseHelper(text, curPos);
             key.getObj()->setType(keyType);
         }
@@ -66,12 +68,13 @@ inline WSEML parseList(const std::string& text, size_t& curPos){
         if (text[curPos] == '['){
             curPos++;
             bool isList = false;
-            if (text[curPos] != '\'') {
+            if (text[curPos] != '`') {
+                if (text[curPos] == '{') curPos++;
                 size_t balance = 1;
-                for (size_t pos = curPos; (text[pos] != ']' && balance != 0); ++pos) {
-                    if (text[pos] == '[') balance++;
-                    if (text[pos] == ']') balance--;
-                    if (text[pos] == ':') isList = true;
+                for (size_t pos = curPos; (text[pos] != ']' || balance != 0); ++pos) {
+                    if (text[pos+1] == '[') balance++;
+                    if (text[pos+1] == ']') balance--;
+                    if (text[pos] == ':') { isList = true; break; }
                 }
             }
             if (isList)
@@ -80,6 +83,7 @@ inline WSEML parseList(const std::string& text, size_t& curPos){
                 dataRole = parseHelper(text, curPos);
             std::swap(dataRole, data);
             curPos++;
+            if (text[curPos] == ']') curPos++;
             WSEML dataType = parseHelper(text, curPos);
             data.getObj()->setType(dataType);
         }
@@ -99,9 +103,13 @@ inline WSEML parseHelper(const std::string& text, size_t& curPos){
             }
             /// String parsing
             case '`': {
-                size_t pos = text.find('\'', curPos);
+                size_t balance = 1;
+                size_t pos = curPos;
+                for (; (text[pos] != '\'' || balance != 0); ++pos) {
+                    if (text[pos+1] == '`') balance++;
+                    if (text[pos+1] == '\'') balance--;
+                }
                 std::string str = text.substr(curPos, pos-curPos+1);
-                std::cout << str << "\n";
                 curPos = pos+1;
                 return WSEML(str);
             }
@@ -114,12 +122,18 @@ inline WSEML parseHelper(const std::string& text, size_t& curPos){
                 curPos++;
                 return parseList(text, curPos);
             }
+            /// String from file parsing
             case '<':{
-                curPos++;
+                curPos+=2;
                 size_t pos = text.find('\'', curPos);
-                std::string newString = text.substr(curPos, pos-curPos);
+                std::string path = "C:\\Users\\Stickman\\CLionProjects\\term_paper\\"; // FIX THIS
+                std::string fileName = path+text.substr(curPos, pos-curPos);
                 curPos = pos+1;
-                return parse(newString);
+                std::ifstream file;
+                file.open(fileName);
+                std::string textFromFile;
+                std::getline(file, textFromFile);
+                return WSEML("`"+textFromFile+"'");
             }
             /// Substring parsing
             case '#':{
@@ -127,13 +141,13 @@ inline WSEML parseHelper(const std::string& text, size_t& curPos){
                 if (text[curPos] == '<'){
                     curPos+=2;
                     size_t pos = text.find('\'', curPos);
-                    std::string fileName = text.substr(curPos, pos-curPos);
+                    std::string path = "C:\\Users\\Stickman\\CLionProjects\\term_paper\\";
+                    std::string fileName = path+text.substr(curPos, pos-curPos);
                     curPos = pos+1;
                     std::ifstream file;
                     file.open(fileName);
                     std::string textFromFile;
                     std::getline(file, textFromFile);
-                    std::cout << textFromFile;
                     return parse(textFromFile);
                 }
                 else{
@@ -188,6 +202,8 @@ inline std::string pack(WSEML wseml){ // много конструкторов :
             i++;
             std::string keyStr = pack(it->getKeyRole()) + "[" + pack(it->getKey()) + "]" + pack(it->getKey().getObj()->getType());
             std::string dataStr = pack(it->getDataRole()) + "[" + pack(it->getData()) + "]" + pack(it->getData().getObj()->getType());
+            std::string d = pack(it->getData());
+            std::string dd = pack(it->getData().getObj()->getType());
             wsemlString+=keyStr;
             wsemlString+=":";
             wsemlString+=dataStr;
