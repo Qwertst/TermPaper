@@ -86,8 +86,8 @@ std::string &ByteString::get() {
     return bytes;
 }
 
-int ByteString::typeInfo() const {
-    return 0;
+Types ByteString::typeInfo() const {
+    return StringType;
 }
 
 List::List(std::list<Pair> l, WSEML& type, Pair* p): Object(type, p), pairList(std::move(l)) {}
@@ -102,8 +102,8 @@ std::list<Pair> &List::get() {
     return pairList;
 }
 
-int List::typeInfo() const {
-    return 1;
+Types List::typeInfo() const {
+    return ListType;
 }
 
 Pair::Pair(List* listPtr, WSEML& key, WSEML& data, WSEML& keyRole, WSEML& dataRole):

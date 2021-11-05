@@ -7,6 +7,8 @@ class Pair;
 class Object;
 class WSEML;
 
+enum Types{ StringType, ListType };
+
 extern WSEML NULLOBJ;
 
 class WSEML{
@@ -32,7 +34,7 @@ public:
     virtual ~Object();
     void setPair(Pair* p);
     void setType(WSEML& newType);
-    virtual int typeInfo() const = 0; // Base Костыль
+    virtual Types typeInfo() const = 0;
     Pair* getPair();
     WSEML getType();
 private:
@@ -45,7 +47,7 @@ public:
     ByteString(std::string str, WSEML& type = NULLOBJ, Pair* p = nullptr);
     ~ByteString() override;
     ByteString* clone() const override;
-    int typeInfo() const override; // Костыль #1
+    Types typeInfo() const override;
     std::string& get();
 private:
     std::string bytes;
@@ -56,7 +58,7 @@ public:
     List(std::list<Pair> l, WSEML& type= NULLOBJ, Pair* p = nullptr);
     ~List() override;
     List* clone() const override;
-    int typeInfo() const override; // Костыль #2
+    Types typeInfo() const override;
     std::list<Pair>& get();
 private:
     std::list<Pair> pairList;
