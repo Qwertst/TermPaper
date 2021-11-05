@@ -139,8 +139,7 @@ namespace{
                     if (text[curPos] == '<'){
                         curPos+=2;
                         size_t pos = text.find('\'', curPos);
-                        std::string path = "C:\\Users\\Stickman\\CLionProjects\\term_paper\\";
-                        std::string fileName = path+text.substr(curPos, pos-curPos);
+                        std::string fileName = text.substr(curPos, pos-curPos);
                         curPos = pos+1;
                         std::ifstream file;
                         file.open(fileName);
