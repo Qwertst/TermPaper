@@ -7,6 +7,16 @@
 inline WSEML parse(const std::string& text);
 
 namespace{
+    size_t findEnd(const std::string& text, size_t& curPos){
+        size_t balance = 1;
+        size_t pos = curPos;
+        for (; (text[pos] != '\'' || balance != 0); ++pos) {
+            if (text[pos] == '\\') pos+=2;
+            if (text[pos+1] == '`') balance++;
+            if (text[pos+1] == '\'') balance--;
+        }
+        return pos;
+    }
     WSEML parseHelper(const std::string& text, size_t& curPos);
     WSEML parseBytes (const std::string& text, size_t& curPos){
         std::string str;
@@ -101,12 +111,7 @@ namespace{
                 }
                     /// String parsing
                 case '`': {
-                    size_t balance = 1;
-                    size_t pos = curPos;
-                    for (; (text[pos] != '\'' || balance != 0); ++pos) {
-                        if (text[pos+1] == '`') balance++;
-                        if (text[pos+1] == '\'') balance--;
-                    }
+                    size_t pos = findEnd(text, curPos);
                     std::string str = text.substr(curPos, pos-curPos+1);
                     curPos = pos+1;
                     return WSEML(str);
@@ -124,7 +129,7 @@ namespace{
                     /// String from file parsing
                 case '<':{
                     curPos+=2;
-                    size_t pos = text.find('\'', curPos);
+                    size_t pos = findEnd(text, curPos);
                     std::string fileName = text.substr(curPos, pos-curPos);
                     curPos = pos+1;
                     std::ifstream file;
@@ -138,7 +143,7 @@ namespace{
                     curPos++;
                     if (text[curPos] == '<'){
                         curPos+=2;
-                        size_t pos = text.find('\'', curPos);
+                        size_t pos = findEnd(text, curPos);
                         std::string fileName = text.substr(curPos, pos-curPos);
                         curPos = pos+1;
                         std::ifstream file;
@@ -149,7 +154,7 @@ namespace{
                     }
                     else{
                         curPos++;
-                        size_t pos = text.find('\'', curPos);
+                        size_t pos = findEnd(text, curPos);
                         std::string newText = text.substr(curPos, pos-curPos);
                         curPos = pos+1;
                         return parse(newText);
@@ -178,7 +183,6 @@ namespace{
         }
         return WSEML();
     }
-
     bool valid(const std::string& text){
         std::vector<char> queue;
         std::unordered_map<char, char> map = {{'}','{'}, {']','['}, {'\'','`'}, {'\"','\"'}};
