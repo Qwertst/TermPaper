@@ -1,6 +1,6 @@
-#include "WSEML.h"
-#include "parser.cpp"
 #include <iostream>
+#include "WSEML.h"
+#include "parser.h"
 
 int main(){
     std::string s;

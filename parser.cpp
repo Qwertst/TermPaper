@@ -1,12 +1,12 @@
-#include "WSEML.h"
 #include <iostream>
 #include <vector>
 #include <unordered_map>
 #include <fstream>
-
-inline WSEML parse(const std::string& text);
+#include "WSEML.h"
+#include "parser.h"
 
 namespace{
+    WSEML parseHelper(const std::string& text, size_t& curPos);
     size_t findEnd(const std::string& text, size_t& curPos){
         size_t balance = 1;
         size_t pos = curPos;
@@ -17,7 +17,6 @@ namespace{
         }
         return pos;
     }
-    WSEML parseHelper(const std::string& text, size_t& curPos);
     WSEML parseBytes (const std::string& text, size_t& curPos){
         std::string str;
         std::unordered_map<char, int> hex = {{'0', 0}, {'1', 1},{ '2', 2}, {'3', 3}, {'4', 4}, {'5', 5}, {'6', 6}, {'7', 7},
@@ -112,7 +111,7 @@ namespace{
                     /// String parsing
                 case '`': {
                     size_t pos = findEnd(text, curPos);
-                    std::string str = text.substr(curPos, pos-curPos+1);
+                    std::string str = text.substr(curPos+1, pos-curPos-1);
                     curPos = pos+1;
                     return WSEML(str);
                 }
@@ -136,7 +135,7 @@ namespace{
                     file.open(fileName);
                     std::string textFromFile;
                     std::getline(file, textFromFile);
-                    return WSEML("`"+textFromFile+"'");
+                    return WSEML(textFromFile);
                 }
                     /// Substring parsing
                 case '#':{
@@ -165,7 +164,8 @@ namespace{
                     if (48 <= text[curPos] && text[curPos] <= 57) {
                         size_t lastPos = curPos;
                         while ((48 <= text[curPos] && text[curPos] <= 57) || text[curPos] == 'e' || text[curPos] == '.'
-                               || text[curPos] == 'e' || text[curPos] == '(' || text[curPos] == ')' || text[curPos] == '/')
+                               || text[curPos] == 'e' || text[curPos] == '(' || text[curPos] == ')' || text[curPos] == '/' ||
+                               (curPos > 0  && (text[curPos] == '+' || text[curPos] == '-') && text[curPos-1] == 'e'))
                             curPos++;
                         std::string str = text.substr(lastPos, curPos - lastPos);
                         return WSEML(str);
@@ -178,6 +178,8 @@ namespace{
                         std::string str = text.substr(lastPos, curPos-lastPos);
                         return WSEML(str);
                     }
+                    std::cout << "Invalid string\n";
+                    return WSEML();
                 }
             }
         }
@@ -217,7 +219,7 @@ namespace{
     }
 }
 
-inline WSEML parse(const std::string& text){
+WSEML parse(const std::string& text){
     if (valid(text)) {
         size_t curPos = 0;
         return parseHelper(text, curPos);
@@ -225,7 +227,7 @@ inline WSEML parse(const std::string& text){
     return WSEML();
 }
 
-inline std::string pack(WSEML wseml){
+std::string pack(WSEML wseml){
     std::string wsemlString;
     if (wseml.getObj() == nullptr) return "$";
     if (wseml.getObj()->typeInfo() == StringType){
