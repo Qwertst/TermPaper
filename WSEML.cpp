@@ -133,3 +133,7 @@ WSEML Pair::getKeyRole(){
 WSEML Pair::getDataRole() {
     return dataRole;
 }
+
+List *Pair::getList() {
+    return listPtr;
+}

@@ -248,8 +248,16 @@ std::string pack(WSEML wseml){
         wsemlString+="{";
         for (auto it = list.begin(); it != list.end(); ++it){
             i++;
-            std::string keyStr = pack(it->getKeyRole()) + "[" + pack(it->getKey()) + "]" + pack(it->getKey().getObj()->getType());
-            std::string dataStr = pack(it->getDataRole()) + "[" + pack(it->getData()) + "]" + pack(it->getData().getObj()->getType());
+            std::string keyRoleStr = pack(it->getKeyRole());
+            std::string keyStr = pack(it->getKey());
+            std::string keyTypeStr = pack(it->getKey().getObj()->getType());
+            if (keyRoleStr != "$" || keyTypeStr !="$")
+                keyStr = keyRoleStr + "[" + keyStr + "]" + keyTypeStr;
+            std::string dataRoleStr = pack(it->getDataRole());
+            std::string dataStr = pack(it->getData());
+            std::string dataTypeStr = pack(it->getData().getObj()->getType());
+            if (dataRoleStr != "$" || dataTypeStr !="$")
+                dataStr = dataRoleStr + "[" + dataStr + "]" + dataTypeStr;
             wsemlString+=keyStr;
             wsemlString+=":";
             wsemlString+=dataStr;
