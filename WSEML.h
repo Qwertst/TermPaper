@@ -5,13 +5,18 @@
 
 class Pair;
 class Object;
+class WSEML;
+
+enum Types{ StringType, ListType };
+
+extern WSEML NULLOBJ;
 
 class WSEML{
 public:
     WSEML();
     explicit WSEML(Object* obj);
-    WSEML(std::string str, WSEML& type, Pair* p = nullptr);
-    WSEML(std::list<Pair> l, WSEML& type, Pair* p = nullptr);
+    WSEML(std::string str, WSEML& type = NULLOBJ, Pair* p = nullptr);
+    WSEML(std::list<Pair> l, WSEML& type = NULLOBJ, Pair* p = nullptr);
     WSEML(const WSEML& wseml);
     WSEML(WSEML&& wseml) noexcept;
     ~WSEML();
@@ -28,7 +33,10 @@ public:
     virtual Object* clone() const = 0;
     virtual ~Object();
     void setPair(Pair* p);
+    void setType(WSEML& newType);
+    virtual Types typeInfo() const = 0;
     Pair* getPair();
+    WSEML getType();
 private:
     WSEML type;
     Pair* pair;
@@ -36,25 +44,34 @@ private:
 
 class ByteString: public Object{
 public:
-    ByteString(std::string str, WSEML& type, Pair* p = nullptr);
+    ByteString(std::string str = "", WSEML& type = NULLOBJ, Pair* p = nullptr);
     ~ByteString() override;
     ByteString* clone() const override;
+    Types typeInfo() const override;
+    std::string& get();
 private:
     std::string bytes;
 };
 
 class List: public Object{
 public:
-    List(std::list<Pair> l, WSEML& type, Pair* p = nullptr);
+    List(std::list<Pair> l = {}, WSEML& type= NULLOBJ, Pair* p = nullptr);
     ~List() override;
     List* clone() const override;
+    Types typeInfo() const override;
+    std::list<Pair>& get();
 private:
     std::list<Pair> pairList;
 };
 
 class Pair{
 public:
-    Pair(WSEML& key, WSEML& data, WSEML& keyRole, WSEML& dataRole, List* listPtr);
+    Pair(List* listPtr, WSEML& key, WSEML& data, WSEML& keyRole = NULLOBJ, WSEML& dataRole = NULLOBJ);
+    WSEML getKey();
+    WSEML getData();
+    WSEML getKeyRole();
+    WSEML getDataRole();
+    List* getList();
 private:
     WSEML key;
     WSEML data;
