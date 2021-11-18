@@ -44,7 +44,7 @@ private:
 
 class ByteString: public Object{
 public:
-    ByteString(std::string str = "", WSEML& type = NULLOBJ, Pair* p = nullptr);
+    ByteString(std::string str, WSEML& type = NULLOBJ, Pair* p = nullptr);
     ~ByteString() override;
     ByteString* clone() const override;
     Types typeInfo() const override;
@@ -55,7 +55,7 @@ private:
 
 class List: public Object{
 public:
-    List(std::list<Pair> l = {}, WSEML& type= NULLOBJ, Pair* p = nullptr);
+    List(std::list<Pair> l, WSEML& type= NULLOBJ, Pair* p = nullptr);
     ~List() override;
     List* clone() const override;
     Types typeInfo() const override;
@@ -66,17 +66,18 @@ private:
 
 class Pair{
 public:
-    Pair(List* listPtr, WSEML& key, WSEML& data, WSEML& keyRole = NULLOBJ, WSEML& dataRole = NULLOBJ);
-    WSEML getKey();
-    WSEML getData();
-    WSEML getKeyRole();
-    WSEML getDataRole();
-    List* getList();
+    Pair(WSEML* listPtr, WSEML& key, WSEML& data, WSEML& keyRole = NULLOBJ, WSEML& dataRole = NULLOBJ);
+    WSEML& getKey();
+    WSEML& getData();
+    WSEML& getKeyRole();
+    WSEML& getDataRole();
+    WSEML* getList();
+    void setList(WSEML* list);
 private:
     WSEML key;
     WSEML data;
     WSEML keyRole;
     WSEML dataRole;
-    List* listPtr;
+    WSEML* listPtr;
 };
 #endif

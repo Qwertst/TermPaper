@@ -82,7 +82,7 @@ ByteString* ByteString::clone() const {
     return new ByteString(*this);
 }
 
-std::string &ByteString::get() {
+std::string& ByteString::get() {
     return bytes;
 }
 
@@ -98,7 +98,7 @@ List* List::clone() const {
     return new List(*this);
 }
 
-std::list<Pair> &List::get() {
+std::list<Pair>& List::get() {
     return pairList;
 }
 
@@ -106,7 +106,7 @@ Types List::typeInfo() const {
     return ListType;
 }
 
-Pair::Pair(List* listPtr, WSEML& key, WSEML& data, WSEML& keyRole, WSEML& dataRole):
+Pair::Pair(WSEML* listPtr, WSEML& key, WSEML& data, WSEML& keyRole, WSEML& dataRole):
         key(key), data(data), keyRole(keyRole), dataRole(dataRole), listPtr(listPtr){
     if (key.getObj())
         key.getObj()->setPair(this);
@@ -118,22 +118,26 @@ Pair::Pair(List* listPtr, WSEML& key, WSEML& data, WSEML& keyRole, WSEML& dataRo
         dataRole.getObj()->setPair(this);
 }
 
-WSEML Pair::getKey() {
+WSEML& Pair::getKey() {
     return key;
 }
 
-WSEML Pair::getData() {
+WSEML& Pair::getData() {
     return data;
 }
 
-WSEML Pair::getKeyRole(){
+WSEML& Pair::getKeyRole(){
     return keyRole;
 }
 
-WSEML Pair::getDataRole() {
+WSEML& Pair::getDataRole() {
     return dataRole;
 }
 
-List *Pair::getList() {
+WSEML* Pair::getList() {
     return listPtr;
+}
+
+void Pair::setList(WSEML *list) {
+    listPtr = list;
 }
