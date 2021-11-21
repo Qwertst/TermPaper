@@ -14,7 +14,7 @@ WSEML::WSEML(std::list<Pair> l, WSEML &type, Pair *p) {
     obj = new List(std::move(l), type, p);
 }
 
-WSEML::WSEML(const WSEML& wseml){
+WSEML::WSEML(const WSEML& wseml) {
     if (wseml.obj != nullptr)
         obj = wseml.obj->clone();
     else
@@ -54,6 +54,14 @@ Object* WSEML::getObj() {
     return obj;
 }
 
+Types WSEML::getType() {
+    return this->getObj()->typeInfo();
+}
+
+WSEML* WSEML::getList() {
+    return this->getObj()->getPair()->getList();
+}
+
 Object::Object(WSEML& type, Pair* pair): type(type), pair(pair){}
 
 Object::~Object() = default;
@@ -66,7 +74,7 @@ Pair* Object::getPair() {
     return pair;
 }
 
-WSEML Object::getType() {
+WSEML& Object::getType() {
     return type;
 }
 
@@ -74,7 +82,7 @@ void Object::setType(WSEML& newType) {
     type = newType;
 }
 
-ByteString::ByteString(std::string str, WSEML& type, Pair* p): Object(type, p), bytes(std::move(str)) {}
+ByteString::ByteString(std::string str, WSEML& type, Pair* p): Object(type, p), bytes(std::move(str)){}
 
 ByteString::~ByteString() = default;
 
@@ -90,7 +98,19 @@ Types ByteString::typeInfo() const {
     return StringType;
 }
 
-List::List(std::list<Pair> l, WSEML& type, Pair* p): Object(type, p), pairList(std::move(l)) {}
+bool ByteString::isSame(Object *obj) {
+    return obj->isSameAs(this);
+}
+
+bool ByteString::isSameAs(ByteString *obj) {
+    return (this->bytes == obj->bytes);
+}
+
+bool ByteString::isSameAs(List *obj) {
+    return false;
+}
+
+List::List(std::list<Pair> l, WSEML& type, Pair* p): Object(type, p), pairList(std::move(l)){}
 
 List::~List() = default;
 
@@ -106,16 +126,37 @@ Types List::typeInfo() const {
     return ListType;
 }
 
+bool List::isSame(Object *obj) {
+    return obj->isSameAs(this);
+}
+
+bool List::isSameAs(ByteString *obj) {
+    return false;
+}
+
+bool List::isSameAs(List *obj) {
+    bool flag = true;
+    auto firstIt = this->pairList.begin();
+    auto secondIt = obj->pairList.begin();
+    for (; firstIt != this->pairList.end() && secondIt != obj->pairList.end() && flag; firstIt++, secondIt++) {
+        flag = (equal(firstIt->getKey(), secondIt->getKey()) && equal(firstIt->getData(), secondIt->getData()) &&
+                equal(firstIt->getKeyRole(), secondIt->getKeyRole()) && equal(firstIt->getDataRole(), secondIt->getDataRole()));
+    }
+    if (firstIt != this->pairList.end() || secondIt != obj->pairList.end()) flag = false;
+    return flag;
+}
+
+
 Pair::Pair(WSEML* listPtr, WSEML& key, WSEML& data, WSEML& keyRole, WSEML& dataRole):
-        key(key), data(data), keyRole(keyRole), dataRole(dataRole), listPtr(listPtr){
-    if (key.getObj())
-        key.getObj()->setPair(this);
-    if (data.getObj())
-        data.getObj()->setPair(this);
-    if (keyRole.getObj())
-        keyRole.getObj()->setPair(this);
-    if (dataRole.getObj())
-        dataRole.getObj()->setPair(this);
+        key(key), data(data), keyRole(keyRole), dataRole(dataRole), listPtr(listPtr) {
+    if (this->key.getObj())
+        this->key.getObj()->setPair(this);
+    if (this->data.getObj())
+        this->data.getObj()->setPair(this);
+    if (this->keyRole.getObj())
+        this->keyRole.getObj()->setPair(this);
+    if (this->dataRole.getObj())
+        this->dataRole.getObj()->setPair(this);
 }
 
 WSEML& Pair::getKey() {
@@ -126,7 +167,7 @@ WSEML& Pair::getData() {
     return data;
 }
 
-WSEML& Pair::getKeyRole(){
+WSEML& Pair::getKeyRole() {
     return keyRole;
 }
 
@@ -138,6 +179,9 @@ WSEML* Pair::getList() {
     return listPtr;
 }
 
-void Pair::setList(WSEML *list) {
-    listPtr = list;
+bool equal(WSEML& first, WSEML& second) {
+    if (first.getObj() == nullptr && second.getObj() == nullptr) return true;
+    if (first.getObj() != nullptr && second.getObj() != nullptr)
+        return (first.getObj()->isSame(second.getObj()) && equal(first.getObj()->getType(), second.getObj()->getType()));
+    else return false;
 }

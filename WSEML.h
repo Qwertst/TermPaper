@@ -4,8 +4,10 @@
 #include <string>
 
 class Pair;
-class Object;
 class WSEML;
+class Object;
+class ByteString;
+class List;
 
 enum Types{ StringType, ListType };
 
@@ -22,6 +24,8 @@ public:
     ~WSEML();
     WSEML& operator=(const WSEML& wseml);
     WSEML& operator=(WSEML&& wseml) noexcept;
+    Types getType();
+    WSEML* getList();
     Object* getObj();
 private:
     Object* obj;
@@ -36,7 +40,10 @@ public:
     void setType(WSEML& newType);
     virtual Types typeInfo() const = 0;
     Pair* getPair();
-    WSEML getType();
+    WSEML& getType();
+    virtual bool isSame(Object* obj) = 0;
+    virtual bool isSameAs(ByteString* obj) = 0;
+    virtual bool isSameAs(List* obj) = 0;
 private:
     WSEML type;
     Pair* pair;
@@ -49,6 +56,9 @@ public:
     ByteString* clone() const override;
     Types typeInfo() const override;
     std::string& get();
+    bool isSame(Object* obj) override;
+    bool isSameAs(ByteString* obj) override;
+    bool isSameAs(List* obj) override;
 private:
     std::string bytes;
 };
@@ -60,6 +70,9 @@ public:
     List* clone() const override;
     Types typeInfo() const override;
     std::list<Pair>& get();
+    bool isSame(Object* obj) override;
+    bool isSameAs(ByteString* obj) override;
+    bool isSameAs(List* obj) override;
 private:
     std::list<Pair> pairList;
 };
@@ -72,7 +85,6 @@ public:
     WSEML& getKeyRole();
     WSEML& getDataRole();
     WSEML* getList();
-    void setList(WSEML* list);
 private:
     WSEML key;
     WSEML data;
@@ -80,4 +92,6 @@ private:
     WSEML dataRole;
     WSEML* listPtr;
 };
+
+bool equal(WSEML& first, WSEML& second);
 #endif
