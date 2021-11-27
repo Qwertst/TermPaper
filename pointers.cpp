@@ -8,7 +8,7 @@ WSEML calc(WSEML& expPtr) {
     unsigned long long int addr = std::stoi(dynamic_cast<ByteString*>(compList.begin()->getData().getObj())->get(), 0, 16);
     WSEML* curObj = (WSEML*)addr;
     listIt++;
-    bool strFlag = false;
+    bool byteFlag = false;
     int byteOffset = 0;
 
     while (listIt != expList.end()) {
@@ -19,7 +19,7 @@ WSEML calc(WSEML& expPtr) {
             psIt++;
             int index = std::stoi(dynamic_cast<ByteString*>(psIt->getData().getObj())->get());
             if (curObj->getType() == StringType) {
-                strFlag = true;
+                byteFlag = true;
                 byteOffset = index;
             }
             else{
@@ -38,17 +38,22 @@ WSEML calc(WSEML& expPtr) {
             curObj = &(itt->getData());
         }
         if (step == "u") {
-            strFlag = false;
+            curObj = (byteFlag) ? curObj : curObj->getList();
+            byteFlag = false;
             byteOffset = 0;
-            curObj = curObj->getList();
         }
         if (step == "b") {
             psIt++;
             int offset =  std::stoi(dynamic_cast<ByteString*>(psIt->getData().getObj())->get());
-            if (curObj->getType() == StringType)
+            if (byteFlag)
                 byteOffset += offset;
-            else
-                curObj = &((curObj->getObj()->getPair()+offset)->getData());
+            else {
+                std::list<Pair>& upperList = dynamic_cast<List*>(curObj->getList()->getObj())->get();
+                auto itt = upperList.begin();
+                while (!equal(itt->getData(), *curObj)) itt++;
+                std::advance(itt, offset);
+                curObj = &itt->getData();
+            }
         }
         listIt++;
     }
@@ -56,13 +61,12 @@ WSEML calc(WSEML& expPtr) {
     std::ostringstream s;
     s << (void const *)curObj;
     std::string address = s.str();
-
     std::list<Pair> newCompList;
     WSEML compPtr = WSEML();
     WSEML key = WSEML("addr");
     WSEML data = WSEML(address);
     newCompList.emplace_back(&compPtr, key, data);
-    if (strFlag){
+    if (byteFlag){
         WSEML sKey = WSEML("offset");
         WSEML sData = WSEML(std::to_string(byteOffset));
         newCompList.emplace_back(&compPtr, sKey, sData);
@@ -79,10 +83,10 @@ WSEML expand(WSEML& compPtr) {
     unsigned long long int addr = std::stoi(dynamic_cast<ByteString*>(listIt->getData().getObj())->get(), 0, 16);
     WSEML* curObj = (WSEML*)addr;
     WSEML* upperListPtr = (curObj->getObj()->getPair() != nullptr) ? curObj->getList() : nullptr;
-
     int countPS = 0;
     listIt++;
-    if (listIt != expList.end()) {
+
+    if (listIt !=  compList.end()) {
         WSEML curPsKey = WSEML(std::to_string(countPS++));
         WSEML type = WSEML("t");
         WSEML byInd = WSEML("i");
@@ -97,9 +101,7 @@ WSEML expand(WSEML& compPtr) {
     while (upperListPtr != nullptr) {
         std::list<Pair>& upperList = dynamic_cast<List*>(upperListPtr->getObj())->get();
         auto it = upperList.begin();
-        while (!equal(*curObj, it->getData())) {
-            it++;
-        }
+        while (!equal(*curObj, it->getData())) it++;
         WSEML curPsKey = WSEML(std::to_string(countPS++));
         WSEML type = WSEML("t");
         WSEML byKey = WSEML("k");
@@ -181,15 +183,22 @@ WSEML reduce(WSEML& expPtr) {
                 objStack.push_back(&itOnCur->getData());
             }
             else {
-                std::list<Pair>& upperList = dynamic_cast<List*>(curObj->getObj())->get();
-                auto itOnPrev = upperList.begin();
-                std::advance(itOnPrev, index);
-                objStack.push_back(&itOnPrev->getData());
-                psStack.push_back(step);
-                reducedList.push_back(*listIt);
+                if (curObj->getType() == ListType) {
+                    std::list<Pair> &upperList = dynamic_cast<List *>(curObj->getObj())->get();
+                    auto itOnPrev = upperList.begin();
+                    std::advance(itOnPrev, index);
+                    objStack.push_back(&itOnPrev->getData());
+                    psStack.push_back(step);
+                    reducedList.push_back(*listIt);
+                }
+                else {
+                    objStack.push_back(curObj);
+                    psStack.push_back("i_str");
+                    reducedList.push_back(*listIt);
+                }
             }
 
-        } // TODO CHECK
+        }
         if (step == "k") {
             std::list<Pair>& upperList = dynamic_cast<List*>(curObj->getObj())->get();
             auto itOnNewKey = upperList.begin();
@@ -226,15 +235,15 @@ WSEML reduce(WSEML& expPtr) {
                 reducedList.push_back(*listIt);
                 objStack.push_back(&itOnNewKey->getData());
             }
-        } // TODO CHECK
+        }
         if (step == "u") {
-            if (psStack.back() == "i" || psStack.back() == "k") {
+            if (psStack.back() == "i" || psStack.back() == "k" || psStack.back() == "i_str") {
                 psStack.pop_back();
                 objStack.pop_back();
                 reducedList.pop_back();
             }
             else{
-                if (psStack.back() == "b" || psStack.back() == "i_str"){
+                if (psStack.back() == "b"){
                     psStack.pop_back();
                     reducedList.pop_back();
                     objStack.pop_back();
@@ -243,7 +252,7 @@ WSEML reduce(WSEML& expPtr) {
                 reducedList.emplace_back(&reduced, listIt->getKey(), listIt->getData());
                 objStack.push_back(curObj->getList());
             }
-        } // TODO CHECK
+        }
         if (step == "b") {
             psIt++;
             int offset =  std::stoi(dynamic_cast<ByteString*>(psIt->getData().getObj())->get());
@@ -256,7 +265,12 @@ WSEML reduce(WSEML& expPtr) {
                     newOff.getObj()->setPair(&(prevPs.back()));
                     prevPs.back().getData() = std::move(newOff);
                     objStack.pop_back();
-                    objStack.push_back(&((curObj->getObj()->getPair() + offset)->getData()));
+
+                    std::list<Pair>& upperList = dynamic_cast<List*>(curObj->getList()->getObj())->get();
+                    auto itt = upperList.begin();
+                    while (!equal(itt->getData(), *curObj)) itt++;
+                    std::advance(itt, offset);
+                    objStack.push_back(&itt->getData());
                 }
                 else{
                     reducedList.pop_back();
@@ -300,7 +314,7 @@ WSEML reduce(WSEML& expPtr) {
                 objStack.pop_back();
                 objStack.push_back(&(itt->getData()));
             }
-        } // TODO CHECK
+        }
         listIt++;
     }
     reduced = std::move(WSEML(reducedList));
@@ -314,6 +328,7 @@ void to_i(WSEML& expPtr) {
     unsigned long long int addr = std::stoi(dynamic_cast<ByteString*>(compList.begin()->getData().getObj())->get(), 0, 16);
     WSEML* curObj = (WSEML*)addr;
     listIt++;
+    bool byteFlag = false;
 
     while (listIt != expList.end()) {
         std::list<Pair>& curPS = dynamic_cast<List*>(listIt->getData().getObj())->get();
@@ -328,6 +343,7 @@ void to_i(WSEML& expPtr) {
                 std::advance(itt, index);
                 curObj = &(itt->getData());
             }
+            else byteFlag = true;
         }
         if (step == "k") {
             psIt++;
@@ -348,18 +364,24 @@ void to_i(WSEML& expPtr) {
             WSEML index = WSEML(std::to_string(pos));
             newPsList.emplace_back(&newPs, type, byInd);
             newPsList.emplace_back(&newPs, byInd, index);
-            newPs.getObj()->setPair(&(*listIt));
             newPs = std::move(WSEML(newPsList));
             listIt->getData() = std::move(newPs);
+            listIt->getData().getObj()->setPair(listIt->getKey().getObj()->getPair());
         }
         if (step == "u") {
-            curObj = curObj->getList();
+            curObj = (byteFlag) ? curObj : curObj->getList();
+            byteFlag = false;
         }
         if (step == "b") {
             psIt++;
             int offset =  std::stoi(dynamic_cast<ByteString*>(psIt->getData().getObj())->get());
-            if (curObj->getType() == ListType)
-                curObj = &((curObj->getObj()->getPair()+offset)->getData());
+            if (curObj->getType() == ListType) {
+                std::list<Pair>& upperList = dynamic_cast<List*>(curObj->getList()->getObj())->get();
+                auto itt = upperList.begin();
+                while (!equal(itt->getData(), *curObj)) itt++;
+                std::advance(itt, offset);
+                curObj = &itt->getData();
+            }
         }
         listIt++;
     }
@@ -372,28 +394,32 @@ void to_k(WSEML& expPtr) {
     unsigned long long int addr = std::stoi(dynamic_cast<ByteString*>(compList.begin()->getData().getObj())->get(), 0, 16);
     WSEML* curObj = (WSEML*)addr;
     listIt++;
+    bool byteFlag = false;
 
     while (listIt != expList.end()) {
         std::list<Pair>& curPS = dynamic_cast<List*>(listIt->getData().getObj())->get();
         auto psIt = curPS.begin();
         std::string step = dynamic_cast<ByteString*>(psIt->getData().getObj())->get();
-        if (step == "i" && curObj->getType() == ListType) {
-            psIt++;
-            int index = std::stoi(dynamic_cast<ByteString*>(psIt->getData().getObj())->get());
-            std::list<Pair>& curList = dynamic_cast<List*>(curObj->getObj())->get();
-            auto itt = curList.begin();
-            std::advance(itt, index);
-            curObj = &(itt->getData());
+        if (step == "i") {
+            if (curObj->getType() == ListType) {
+                psIt++;
+                int index = std::stoi(dynamic_cast<ByteString *>(psIt->getData().getObj())->get());
+                std::list<Pair> &curList = dynamic_cast<List *>(curObj->getObj())->get();
+                auto itt = curList.begin();
+                std::advance(itt, index);
+                curObj = &(itt->getData());
 
-            WSEML newPs = WSEML();
-            std::list<Pair> newPsList;
-            WSEML type = WSEML("t");
-            WSEML byKey = WSEML("k");
-            newPsList.emplace_back(&newPs, type, byKey);
-            newPsList.emplace_back(&newPs, byKey, itt->getKey());
-            newPs.getObj()->setPair(&(*listIt));
-            newPs = std::move(WSEML(newPsList));
-            listIt->getData() = std::move(newPs);
+                WSEML newPs = WSEML();
+                std::list<Pair> newPsList;
+                WSEML type = WSEML("t");
+                WSEML byKey = WSEML("k");
+                newPsList.emplace_back(&newPs, type, byKey);
+                newPsList.emplace_back(&newPs, byKey, itt->getKey());
+                newPs = std::move(WSEML(newPsList));
+                listIt->getData() = std::move(newPs);
+                listIt->getData().getObj()->setPair(listIt->getKey().getObj()->getPair());
+            }
+            else byteFlag = true;
         }
         if (step == "k") {
             psIt++;
@@ -404,13 +430,19 @@ void to_k(WSEML& expPtr) {
             curObj = &(itt->getData());
         }
         if (step == "u") {
-            curObj = curObj->getList();
+            curObj = (byteFlag) ? curObj : curObj->getList();
+            byteFlag = false;
         }
         if (step == "b") {
             psIt++;
             int offset =  std::stoi(dynamic_cast<ByteString*>(psIt->getData().getObj())->get());
-            if (curObj->getType() == ListType)
-                curObj = &((curObj->getObj()->getPair()+offset)->getData());
+            if (curObj->getType() == ListType) {
+                std::list<Pair>& upperList = dynamic_cast<List*>(curObj->getList()->getObj())->get();
+                auto itt = upperList.begin();
+                while (!equal(itt->getData(), *curObj)) itt++;
+                std::advance(itt, offset);
+                curObj = &itt->getData();
+            }
         }
         listIt++;
     }

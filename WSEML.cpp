@@ -7,22 +7,38 @@ WSEML::WSEML(Object* obj): obj(obj){}
 WSEML::WSEML(): obj(nullptr){}
 
 WSEML::WSEML(std::string str, WSEML &type, Pair *p) {
-    obj = new ByteString(std::move(str), type, p);
+    obj = new ByteString(str, type, p);
 }
 
 WSEML::WSEML(std::list<Pair> l, WSEML &type, Pair *p) {
-    obj = new List(std::move(l), type, p);
+    List* lst = new List(l, type, p);
+    obj = lst;
+    for (Pair& pair : lst->get())
+        pair.setList(this);
 }
 
 WSEML::WSEML(const WSEML& wseml) {
-    if (wseml.obj != nullptr)
+    if (wseml.obj != nullptr) {
         obj = wseml.obj->clone();
+        if (obj->typeInfo() == ListType) {
+            std::list<Pair>& list = dynamic_cast<List*>(obj)->get();
+            for (Pair &pair : list) {
+                pair.setList(this);
+            }
+        }
+    }
     else
         obj = nullptr;
 }
 
 WSEML::WSEML(WSEML&& wseml) noexcept {
     obj = wseml.obj;
+    if (obj != nullptr && obj->typeInfo() == ListType) {
+        std::list<Pair>& list = dynamic_cast<List *>(obj)->get();
+        for (Pair &pair : list) {
+            pair.setList(this);
+        }
+    }
     wseml.obj = nullptr;
 }
 
@@ -33,8 +49,15 @@ WSEML::~WSEML() {
 WSEML& WSEML::operator=(const WSEML& wseml) {
     if (this != &wseml){
         delete obj;
-        if (wseml.obj != nullptr)
+        if (wseml.obj != nullptr) {
             obj = wseml.obj->clone();
+            if (obj->typeInfo() == ListType) {
+                std::list<Pair>& list = dynamic_cast<List*>(obj)->get();
+                for (Pair& pair : list) {
+                    pair.setList(this);
+                }
+            }
+        }
         else
             obj = nullptr;
     }
@@ -45,6 +68,12 @@ WSEML& WSEML::operator=(WSEML&& wseml) noexcept {
     if (this != &wseml) {
         delete obj;
         obj = wseml.obj;
+        if (obj != nullptr && obj->typeInfo() == ListType) {
+            std::list<Pair>& list = dynamic_cast<List*>(obj)->get();
+            for (Pair& pair : list) {
+                pair.setList(this);
+            }
+        }
         wseml.obj = nullptr;
     }
     return *this;
@@ -103,7 +132,7 @@ bool ByteString::isSame(Object *obj) {
 }
 
 bool ByteString::isSameAs(ByteString *obj) {
-    return (this->bytes == obj->bytes);
+    return (this->bytes == obj->bytes) && equal(this->getType(), obj->getType());
 }
 
 bool ByteString::isSameAs(List *obj) {
@@ -147,8 +176,8 @@ bool List::isSameAs(List *obj) {
 }
 
 
-Pair::Pair(WSEML* listPtr, WSEML& key, WSEML& data, WSEML& keyRole, WSEML& dataRole):
-        key(key), data(data), keyRole(keyRole), dataRole(dataRole), listPtr(listPtr) {
+Pair::Pair(WSEML* listPtr, WSEML key, WSEML data, WSEML keyRole, WSEML dataRole):
+        key(std::move(key)), data(std::move(data)), keyRole(std::move(keyRole)), dataRole(std::move(dataRole)), listPtr(listPtr) {
     if (this->key.getObj())
         this->key.getObj()->setPair(this);
     if (this->data.getObj())
@@ -177,6 +206,21 @@ WSEML& Pair::getDataRole() {
 
 WSEML* Pair::getList() {
     return listPtr;
+}
+
+void Pair::setList(WSEML *lst) {
+    this->listPtr = lst;
+}
+
+Pair::Pair(const Pair& p): key(p.key), data(p.data), keyRole(p.keyRole), dataRole(p.dataRole) {
+    if (this->key.getObj())
+        this->key.getObj()->setPair(this);
+    if (this->data.getObj())
+        this->data.getObj()->setPair(this);
+    if (this->keyRole.getObj())
+        this->keyRole.getObj()->setPair(this);
+    if (this->dataRole.getObj())
+        this->dataRole.getObj()->setPair(this);
 }
 
 bool equal(WSEML& first, WSEML& second) {

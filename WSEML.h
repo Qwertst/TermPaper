@@ -28,7 +28,7 @@ public:
     WSEML* getList();
     Object* getObj();
 private:
-    Object* obj;
+    Object* obj = nullptr;
 };
 
 class Object{
@@ -46,7 +46,7 @@ public:
     virtual bool isSameAs(List* obj) = 0;
 private:
     WSEML type;
-    Pair* pair;
+    Pair* pair = nullptr;
 };
 
 class ByteString: public Object{
@@ -79,18 +79,21 @@ private:
 
 class Pair{
 public:
-    Pair(WSEML* listPtr, WSEML& key, WSEML& data, WSEML& keyRole = NULLOBJ, WSEML& dataRole = NULLOBJ);
+    Pair(WSEML* listPtr, WSEML key, WSEML data, WSEML keyRole = NULLOBJ, WSEML dataRole = NULLOBJ);
+    Pair(const Pair& p);
+    ~Pair() = default;
     WSEML& getKey();
     WSEML& getData();
     WSEML& getKeyRole();
     WSEML& getDataRole();
     WSEML* getList();
+    void setList(WSEML* lst);
 private:
     WSEML key;
     WSEML data;
     WSEML keyRole;
     WSEML dataRole;
-    WSEML* listPtr;
+    WSEML* listPtr = nullptr;
 };
 
 bool equal(WSEML& first, WSEML& second);
