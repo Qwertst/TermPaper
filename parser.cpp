@@ -35,6 +35,7 @@ namespace{
             }
             curPos++;
         }
+        curPos++;
         return WSEML(str);
     }
     WSEML parseList(std::string& text, size_t& curPos) {
@@ -66,7 +67,6 @@ namespace{
                 else
                     keyRole = parseHelper(text, curPos);
                 std::swap(keyRole, key);
-                curPos++;
                 if (text[curPos] == ']') curPos++;
                 WSEML keyType = parseHelper(text, curPos);
                 key.getObj()->setType(keyType);
@@ -90,14 +90,13 @@ namespace{
                 else
                     dataRole = parseHelper(text, curPos);
                 std::swap(dataRole, data);
-                curPos++;
                 if (text[curPos] == ']') curPos++;
                 WSEML dataType = parseHelper(text, curPos);
                 data.getObj()->setType(dataType);
             }
             curList.emplace_back(&ListObj, key, data, keyRole, dataRole);
         }
-        curPos++;
+        if (text[curPos] == '}') curPos++;
         return ListObj;
     }
     WSEML parseHelper(std::string& text, size_t& curPos) {
