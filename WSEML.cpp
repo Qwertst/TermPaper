@@ -1,4 +1,7 @@
 #include "WSEML.h"
+#include "pointers.h"
+#include "parser.h"
+#include "dllconfig.h"
 
 WSEML NULLOBJ = WSEML();
 
@@ -79,16 +82,20 @@ WSEML& WSEML::operator=(WSEML&& wseml) noexcept {
     return *this;
 }
 
-Object* WSEML::getObj() {
+Object* WSEML::getObj() const {
     return obj;
 }
 
-Types WSEML::getType() {
+Types WSEML::getTrueType() const {
     return this->getObj()->typeInfo();
 }
 
+WSEML &WSEML::getType() {
+    return this->getObj()->getType();
+}
+
 WSEML* WSEML::getList() {
-    return this->getObj()->getPair()->getList();
+    return (this->getObj()->getPair() != nullptr) ? this->getObj()->getPair()->getList() : nullptr;
 }
 
 Object::Object(WSEML& type, Pair* pair): type(type), pair(pair){}
@@ -223,9 +230,13 @@ Pair::Pair(const Pair& p): key(p.key), data(p.data), keyRole(p.keyRole), dataRol
         this->dataRole.getObj()->setPair(this);
 }
 
-bool equal(WSEML& first, WSEML& second) {
+bool equal(const WSEML& first, const WSEML& second) {
     if (first.getObj() == nullptr && second.getObj() == nullptr) return true;
     if (first.getObj() != nullptr && second.getObj() != nullptr)
         return (first.getObj()->isSame(second.getObj()) && equal(first.getObj()->getType(), second.getObj()->getType()));
     else return false;
+}
+
+bool WSEML::one_step() {
+    return false;
 }

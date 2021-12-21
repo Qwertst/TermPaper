@@ -24,9 +24,11 @@ public:
     ~WSEML();
     WSEML& operator=(const WSEML& wseml);
     WSEML& operator=(WSEML&& wseml) noexcept;
-    Types getType();
+    Types getTrueType() const;
+    WSEML& getType();
     WSEML* getList();
-    Object* getObj();
+    Object* getObj() const;
+    bool one_step();
 private:
     Object* obj = nullptr;
 };
@@ -75,6 +77,7 @@ public:
     bool isSameAs(List* obj) override;
 private:
     std::list<Pair> pairList;
+    unsigned int nextKey = 1;
 };
 
 class Pair{
@@ -96,5 +99,5 @@ private:
     WSEML* listPtr = nullptr;
 };
 
-bool equal(WSEML& first, WSEML& second);
+bool equal(const WSEML& first, const WSEML& second);
 #endif

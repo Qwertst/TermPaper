@@ -5,8 +5,8 @@
 #include "parser.h"
 
 namespace{
-    WSEML parseHelper(std::string& text, size_t& curPos);
-    size_t findEnd(std::string& text, size_t& curPos) {
+    WSEML parseHelper(const std::string& text, size_t& curPos);
+    size_t findEnd(const std::string& text, size_t& curPos) {
         size_t balance = 1;
         size_t pos = curPos;
         for (; (text[pos] != '\'' || balance != 0); ++pos) {
@@ -16,7 +16,7 @@ namespace{
         }
         return pos;
     }
-    WSEML parseBytes (std::string& text, size_t& curPos) {
+    WSEML parseBytes (const std::string& text, size_t& curPos) {
         std::string str;
         std::unordered_map<char, int> hex = {{'0', 0}, {'1', 1},{ '2', 2}, {'3', 3}, {'4', 4}, {'5', 5}, {'6', 6}, {'7', 7},
                                              {'8', 8}, {'9', 9}, {'a', 10}, {'b', 11}, {'c', 12}, {'d', 13}, {'e', 14}, {'f', 15}};
@@ -38,7 +38,7 @@ namespace{
         curPos++;
         return WSEML(str);
     }
-    WSEML parseList(std::string& text, size_t& curPos) {
+    WSEML parseList(const std::string& text, size_t& curPos) {
         std::list<Pair> l;
         WSEML ListObj = WSEML(l);
         std::list<Pair>& curList = dynamic_cast<List*>(ListObj.getObj())->get();
@@ -99,7 +99,7 @@ namespace{
         if (text[curPos] == '}') curPos++;
         return ListObj;
     }
-    WSEML parseHelper(std::string& text, size_t& curPos) {
+    WSEML parseHelper(const std::string& text, size_t& curPos) {
         while (curPos < text.length()) {
             switch(text[curPos]) {
                 /// Null Object parsing
@@ -175,18 +175,6 @@ namespace{
         }
         return WSEML();
     }
-//    void validate(std::string& text) {
-//        std::vector<char> queue;
-//        std::unordered_map<char, char> map = {{'}','{'}, {']','['}, {'\'','`'}, {'\"','\"'}};
-//        for (size_t pos = 0; pos < text.length(); ++pos) {
-//            if (text[pos] == '\\') pos+=2; // ???
-//            if (text[pos] == '{' || text[pos] == '[' || text[pos] == '`' || text[pos] == '\"') queue.push_back(text[pos]);
-//            if (text[pos] == '}' || text[pos] == ']' || text[pos] == '\'' || text[pos] == '\"') {
-//                if (queue.empty() || map[text[pos]] != queue.back()) return;
-//                else queue.pop_back();
-//            }
-//        }
-//    }
     std::string packBytes(std::string& bytes) {
         std::string s = "\"";
         std::unordered_map<int, char> hex = {{0, '0'}, {1, '1'},{2, '2'}, {3, '3'}, {4, '4'}, {5, '5'}, {6, '6'}, {7, '7'},
@@ -205,16 +193,16 @@ namespace{
     }
 }
 
-WSEML parse(std::string& text) {
+WSEML parse(const std::string& text) {
 //    validate(text);
     size_t curPos = 0;
     return parseHelper(text, curPos);
 }
 
-std::string pack(WSEML wseml) {
+std::string pack(const WSEML& wseml) {
     std::string wsemlString;
     if (wseml.getObj() == nullptr) return "$";
-    if (wseml.getType() == StringType) {
+    if (wseml.getTrueType() == StringType) {
         wsemlString = dynamic_cast<ByteString*>(wseml.getObj())->get();
         bool isBytes = false;
         for (char c: wsemlString) {
