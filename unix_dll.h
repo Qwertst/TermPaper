@@ -8,8 +8,8 @@ bool getFuncRes(const char* dllName, const char* funcName, WSEML* procName, WSEM
     if (!lib) {
         fucnFromDll ProcAddr = dlsym(lib, funcName);
         bool res = false;
-        if (!funcName)
-            res = res = ProcAddr(procName, curStack, curFrm, curCmnd);
+        if (!ProcAddr)
+            res = ProcAddr(procName, curStack, curFrm, curCmnd);
         dlclose(lib);
         return res;
     }

@@ -71,6 +71,19 @@ namespace{
                 WSEML keyType = parseHelper(text, curPos);
                 key.getObj()->setType(keyType);
             }
+
+            if (key.typeInfo() == StringType) { // TODO: testing
+                ByteString* keyPtr = dynamic_cast<ByteString*>(key.getObj());
+                List* thisList = dynamic_cast<List*>(ListObj.getObj());
+                try {
+                    int res = std::stoi(keyPtr->get());
+                    if (res % 2 == 1 && res > thisList->getCurMaxKey()) thisList->getCurMaxKey() = res+2;
+                }
+                catch (std::invalid_argument e) {
+                    continue;
+                }
+            }
+
             curPos++;
             WSEML data = parseHelper(text, curPos);
             if (text[curPos] == '[') {
@@ -202,7 +215,7 @@ WSEML parse(const std::string& text) {
 std::string pack(const WSEML& wseml) {
     std::string wsemlString;
     if (wseml.getObj() == nullptr) return "$";
-    if (wseml.getTrueType() == StringType) {
+    if (wseml.typeInfo() == StringType) {
         wsemlString = dynamic_cast<ByteString*>(wseml.getObj())->get();
         bool isBytes = false;
         for (char c: wsemlString) {

@@ -24,7 +24,7 @@ public:
     ~WSEML();
     WSEML& operator=(const WSEML& wseml);
     WSEML& operator=(WSEML&& wseml) noexcept;
-    Types getTrueType() const;
+    Types typeInfo() const;
     WSEML& getType();
     WSEML* getList();
     Object* getObj() const;
@@ -43,9 +43,9 @@ public:
     virtual Types typeInfo() const = 0;
     Pair* getPair();
     WSEML& getType();
-    virtual bool isSame(Object* obj) = 0;
-    virtual bool isSameAs(ByteString* obj) = 0;
-    virtual bool isSameAs(List* obj) = 0;
+    virtual bool equal(Object* obj) = 0;
+    virtual bool equalTo(ByteString* obj) = 0;
+    virtual bool equalTo(List* obj) = 0;
 private:
     WSEML type;
     Pair* pair = nullptr;
@@ -58,9 +58,9 @@ public:
     ByteString* clone() const override;
     Types typeInfo() const override;
     std::string& get();
-    bool isSame(Object* obj) override;
-    bool isSameAs(ByteString* obj) override;
-    bool isSameAs(List* obj) override;
+    bool equal(Object* obj) override;
+    bool equalTo(ByteString* obj) override;
+    bool equalTo(List* obj) override;
 private:
     std::string bytes;
 };
@@ -72,9 +72,11 @@ public:
     List* clone() const override;
     Types typeInfo() const override;
     std::list<Pair>& get();
-    bool isSame(Object* obj) override;
-    bool isSameAs(ByteString* obj) override;
-    bool isSameAs(List* obj) override;
+    WSEML genKey();
+    unsigned int& getCurMaxKey();
+    bool equal(Object* obj) override;
+    bool equalTo(ByteString* obj) override;
+    bool equalTo(List* obj) override;
 private:
     std::list<Pair> pairList;
     unsigned int nextKey = 1;

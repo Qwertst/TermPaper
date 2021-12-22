@@ -4,7 +4,7 @@
         #include "windows_dll.h"
     #endif
 
-    #ifdef linux
-        #include unix_dll.h"
+    #ifdef __linux__
+        #include "unix_dll.h"
     #endif
 #endif

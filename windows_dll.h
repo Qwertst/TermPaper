@@ -5,7 +5,7 @@
 typedef bool (*funcFromDll)(WSEML*, WSEML*, WSEML*, WSEML*);
 bool getFuncRes(const char* dllName, const char* funcName, WSEML* procName, WSEML* curStack, WSEML* curFrm, WSEML* curCmnd) {
     HINSTANCE lib = LoadLibrary(dllName);
-    if (!lib){
+    if (!lib) {
         funcFromDll ProcAddr = (funcFromDll)GetProcAddress(lib, funcName);
         bool res = false;
         if (!ProcAddr)
